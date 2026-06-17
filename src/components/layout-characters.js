@@ -4,27 +4,27 @@ import { repeat } from 'lit/directives/repeat.js'
 import { getData } from '../services/apiRequest.js'
 import { Loader } from './character-loader.js'
 
-import { CharacterCard } from '../components/character-card.js'
+import { CharacterCard } from './character-card.js'
 import { ModalCharacter } from './modal-character.js'
 import { PlaceholderCards } from './placeholder-cards.js'
 import { PaginatorComponent } from './paginator-component.js'
 import { SearchFields } from './search-fields.js'
+
 import { normalizeFavoriteCharacters } from '../models/normalizeFavoriteCharacters.js'
 import { favorites_changed_event, storage } from '../services/storageService.js'
 
 class LayoutCharacters extends LitElement{
 
     constructor(){
-        super()  
+        super()
         this.results = []
         this.errorMessage = ''
         this.loading = true
         this.abortController = null
 
         this.favoritesCount = storage.getFavoriteCharactersCount()
-        this.favoritesCards = false
+        this.favorites = false
         this.selectedCharacter = null
-
         this.isModalOpen = false
 
         this.currentFilters = {}
@@ -64,14 +64,14 @@ class LayoutCharacters extends LitElement{
             }
 
             .btn-favorites{
-                background-color: #000000; 
-                color: white; 
-                padding: 12px 24px; 
+                background-color: #000000;
+                color: white;
+                padding: 12px 24px;
                 font-size: 1.2rem;
-                border: none; 
-                border-radius: 8px; 
-                cursor: pointer; 
-                transition: background-color 0.3s ease, transform 0.2s ease; 
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.2s ease;
             }
         `
     ]
@@ -81,7 +81,7 @@ class LayoutCharacters extends LitElement{
         loading: { type: Boolean },
         errorMessage: { type: String },
         favoritesCount: { type : Number},
-        favoritesCards: { type: Boolean },
+        favorites: { type: Boolean },
         selectedCharacter: { type: Object },
         isModalOpen: { type: Boolean },
         currentPage: { type: Number },
@@ -98,8 +98,33 @@ class LayoutCharacters extends LitElement{
         super.disconnectedCallback()
     }
 
-    async firstUpdated() {                
+    async firstUpdated() {
         await this.loadCharacters()
+    }
+
+    loadFavoriteCharacters() {
+        if (this.abortController) {
+            this.abortController.abort()
+            this.abortController = null
+        }
+
+        this.favorites = true
+        this.loading = false
+        this.errorMessage = ''
+
+        this.currentPage = 1
+        this.paginationInfo = {
+            count: storage.getFavoriteCharactersCount(),
+            pages: 0,
+            next: null,
+            prev: null,
+            currentPage: 1
+        }
+
+        this.results = normalizeFavoriteCharacters(
+            storage.getFavoriteCharacters(),
+            storage.getFavoriteCharactersIds()
+        )
     }
 
     async loadCharacters(filters = {}) {
@@ -107,9 +132,12 @@ class LayoutCharacters extends LitElement{
             this.abortController.abort()
         }
 
+        this.favorites = false
+        this.loading = true
+        this.errorMessage = ''
+
         const controller = new AbortController()
         this.abortController = controller
-        this.loading = true
 
         try {
             const resp = await getData({
@@ -125,10 +153,9 @@ class LayoutCharacters extends LitElement{
             this.paginationInfo = resp.info
             this.currentPage = resp.info.currentPage
             this.favoritesCount = storage.getFavoriteCharactersCount()
-            
             this.errorMessage = resp.message
-            
-        } catch (error) {         
+
+        } catch (error) {
             if (controller.signal.aborted) {
                 return
             }
@@ -141,7 +168,6 @@ class LayoutCharacters extends LitElement{
                 prev: null,
                 currentPage: this.currentPage
             }
-            
             this.errorMessage = error.message
         } finally {
             if (this.abortController === controller) {
@@ -163,6 +189,19 @@ class LayoutCharacters extends LitElement{
 
     handleFavoritesChanged(event) {
         this.favoritesCount = event.detail.count
+
+        if (this.favorites) {
+            this.results = normalizeFavoriteCharacters(event.detail.favoriteCharacters, event.detail.favoriteIds)
+            this.paginationInfo = {
+                count: event.detail.count,
+                pages: 0,
+                next: null,
+                prev: null,
+                currentPage: 1
+            }
+            return
+        }
+
         this.results = normalizeFavoriteCharacters(this.results, event.detail.favoriteIds)
     }
 
@@ -176,10 +215,18 @@ class LayoutCharacters extends LitElement{
         this.selectedCharacter = null
     }
 
-    render(){       
-        
+    handleFavoritesToggle() {
+        if (this.favorites) {
+            this.loadCharacters(this.currentFilters)
+            return
+        }
+
+        this.loadFavoriteCharacters()
+    }
+
+    render(){
         let bodyContent
-        
+
         if(this.loading){
             bodyContent = html`
                 <custom-loader></custom-loader>
@@ -189,7 +236,13 @@ class LayoutCharacters extends LitElement{
             `
         }else if(this.errorMessage){
             bodyContent = html`
-                <h1 class="text-danger">${this.errorMessage}</h1>                
+                <h1 class="text-danger">${this.errorMessage}</h1>
+            `
+        }else if(!this.results?.length){
+            bodyContent = html`
+                <h1 class="text-danger">
+                    ${this.favorites ? 'No tienes favoritos guardados' : 'No se encontraron personajes'}
+                </h1>
             `
         }else{
             bodyContent = html`
@@ -199,11 +252,12 @@ class LayoutCharacters extends LitElement{
             `
         }
 
-
-        return html`        
+        return html`
             <div class="header">
-                <search-fields @filters-changed="${this.handleFiltersChanged}"></search-fields>
-                <button class="btn-favorites">Favoritos ${this.favoritesCount}</button>
+                ${!this.favorites ? html` <search-fields @filters-changed="${this.handleFiltersChanged}"></search-fields>` : html`<div></div>`}
+                <button class="btn-favorites" @click="${this.handleFavoritesToggle}">
+                    ${this.favorites ? 'Ver todos' : `Favoritos ${this.favoritesCount}`}
+                </button>
             </div>
 
             <div @character-selected="${this.handleCharacterSelected}">
@@ -212,9 +266,8 @@ class LayoutCharacters extends LitElement{
 
             <modal-character .characterData=${this.selectedCharacter} .isOpen=${this.isModalOpen} @modal-closed="${this.handleModalClosed}" ></modal-character>
 
-            <paginator-component .currentPage=${this.currentPage} .totalPages=${this.paginationInfo.pages} .totalCount=${this.paginationInfo.count} @page-changed="${this.handlePageChanged}"></paginator-component>
+            ${!this.favorites ? html` <paginator-component .currentPage=${this.currentPage} .totalPages=${this.paginationInfo.pages} .totalCount=${this.paginationInfo.count} @page-changed="${this.handlePageChanged}"></paginator-component>` : html``}
         `
-
     }
 
 }

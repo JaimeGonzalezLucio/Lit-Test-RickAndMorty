@@ -4,7 +4,7 @@ export function ErrorManagement(code){
 
     switch (code) {
         case 404:
-            message = 'Sin registros :c'
+            message = 'Sin registros'
             break;
 
         case 429:

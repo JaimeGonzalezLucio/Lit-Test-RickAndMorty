@@ -16,7 +16,7 @@ export class PaginatorComponent extends LitElement {
                 gap: 0.5rem;
                 flex-wrap: wrap;
                 margin-top: 2rem;
-                margin-bottom: 5rem
+                margin-bottom: 5rem;
             }
 
             button {
@@ -39,7 +39,6 @@ export class PaginatorComponent extends LitElement {
                 opacity: 0.9;
                 cursor: not-allowed;
             }
-
         `
     ];
 
@@ -51,8 +50,7 @@ export class PaginatorComponent extends LitElement {
     }
 
     changePage(page) {
-        if (page == this.currentPage || page < 1 || page > this.totalPages) {
-            // 
+        if (page === this.currentPage || page < 1 || page > this.totalPages) {
             return;
         }
 
@@ -64,21 +62,23 @@ export class PaginatorComponent extends LitElement {
     }
 
     render() {
+        if (this.totalPages <= 1) {
+            return html``;
+        }
+
         return html`
             <div class="paginator">
-
-                <button ?disabled=${this.currentPage === 1 || this.currentPage < 1} @click=${() => this.changePage(this.currentPage - 1)} >
+                <button ?disabled=${this.currentPage === 1} @click=${() => this.changePage(this.currentPage - 1)}>
                     Anterior
                 </button>
 
                 <span>
-                    Página ${this.currentPage} de ${this.totalPages}
+                    Pagina ${this.currentPage} de ${this.totalPages}
                 </span>
 
-                <button ?disabled=${this.currentPage === this.totalPages} @click=${() => this.changePage(this.currentPage + 1)} >
+                <button ?disabled=${this.currentPage === this.totalPages} @click=${() => this.changePage(this.currentPage + 1)}>
                     Siguiente
                 </button>
-
             </div>
         `;
     }
