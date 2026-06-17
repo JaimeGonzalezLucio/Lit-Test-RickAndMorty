@@ -1,10 +1,14 @@
 # Lit-Test-RickAndMorty
-Consumo de la api rickandmorty con Lit
+Consumo de la api rickandmorty.
 
-ejecutar: 'npm i lit' para la generacion de la carpeta node_modules
+## API: https://rickandmortyapi.com/
 
-Features:
-Debounce time + cancelacion de peticiones
-Custom events + Manejo de estado
-Skeleton + loader
-Testing
+## Tecnologias: Javascript, Lit
+
+## Instalacion: ejecutar: 'npm i lit' para la generacion de la carpeta node_modules.
+
+## Features:
+Debounce time + cancelacion de peticiones.
+Custom events + Manejo de estado.
+Skeleton + loader.
+Testing.
