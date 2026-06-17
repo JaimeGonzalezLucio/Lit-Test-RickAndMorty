@@ -1,7 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { storageService } from '../services/storageService';
-
-const storage = new storageService()
+import { storage } from '../services/storageService.js';
 
 export class CharacterCard extends LitElement {
 
@@ -74,30 +72,22 @@ export class CharacterCard extends LitElement {
                 flex-wrap: wrap;
             }
 
-            .info span  {
-                padding:.5rem;
-                border-radius: 5px;
-                font-weight: 600
+            .btn{                
+                color: white  ;
+                padding: 6px 12px; 
+                font-size: .8rem;
+                border: none; 
+                border-radius: 8px; 
+                cursor: pointer; 
+                transition: background-color 0.3s ease, transform 0.2s ease; 
             }
 
-            .info span:nth-child(1){
-                background-color: green;
-                color: white
+            .btn-red{
+                background-color: #820c0c                
             }
 
-            .info span:nth-child(2){
-                background-color: black;
-                color: white
-            }
-
-            .info span:nth-child(3){
-                background-color: blue;
-                color: white
-            }
-
-            .info span:nth-child(4){
-                background-color: yellow;
-                color: black
+            .btn-gray{
+                background-color: grey;       
             }
 
         `
@@ -112,8 +102,12 @@ export class CharacterCard extends LitElement {
         character: { type: Object }
     }
 
-    addFavorite(){
-        storage.saveCharacter(this.character)
+    toggleFavorite() {
+        const isFavorite = storage.toggleFavoriteCharacter(this.character)
+        this.character = {
+            ...this.character,
+            favorite: isFavorite
+        }
     }
 
     render() {
@@ -124,7 +118,10 @@ export class CharacterCard extends LitElement {
                 </div>
                 <div class="info">                    
                     <h3>${this.character?.name}</h3>                                
-                    <button @click="${(e) => { e.stopPropagation(); this.addFavorite }}">Agregar a favoritos</button>
+                    <button @click="${(e) => { e.stopPropagation(); this.toggleFavorite() }}"
+                    class="btn ${this.character?.favorite ? 'btn-red' : 'btn-gray'}">
+                        ${this.character?.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                    </button>
                 </div>
             </div>
         `;

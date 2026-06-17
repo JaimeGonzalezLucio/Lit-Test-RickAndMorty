@@ -1,5 +1,4 @@
 import { LitElement, html, css } from 'lit';
-import { getData } from '../services/apiRequest';
 
 export class SearchFields extends LitElement {
     static styles = [
@@ -36,7 +35,6 @@ export class SearchFields extends LitElement {
 
     constructor(){
         super();
-        this.abortController = null
         this.searchTimeOut = null
     }
 
@@ -56,19 +54,16 @@ export class SearchFields extends LitElement {
     }
 
     search(e){
-
-        if (this.abortController) {
-            this.abortController.abort()
-        }
-
-        this.abortController = new AbortController()
-        const { signal } = this.abortController
-
         const filters = { 
             name : this.shadowRoot.querySelector('input').value ?? '',
             status : this.shadowRoot.querySelector('select').value ?? '',           
         }
-        getData(filters, signal)
+
+        this.dispatchEvent(new CustomEvent('filters-changed', {
+            detail: filters,
+            bubbles: true,
+            composed: true
+        }))
     }
 
     render() {
@@ -76,6 +71,7 @@ export class SearchFields extends LitElement {
             <div class="container">
                 <input type="text" placeholder="Buscar por nombre..." @input="${this.debounceTime}">
                 <select @change="${this.search}">
+                    <option value="" selected>Todos</option>
                     <option value="Alive">Vivo</option>
                     <option value="Dead">Muerto</option>
                     <option value="unknown">Desconocido</option>

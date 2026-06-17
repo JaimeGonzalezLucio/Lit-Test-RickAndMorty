@@ -1,15 +1,30 @@
 const localStorageKey = 'ArrayCharacters'
 
-export class storageService {
+export const favorites_changed_event = 'favorites-changed'
+export class storageService extends EventTarget{
 
     constructor(){
-
+        super();
         this.favoriteCharacters = JSON.parse(localStorage.getItem(localStorageKey)) ?? []
 
     }
 
+    emitFavoritesChanged() {
+        this.dispatchEvent(new CustomEvent(favorites_changed_event, {
+            detail: {
+                count: this.favoriteCharacters.length,
+                favoriteIds: this.getFavoriteCharactersIds(),
+                favoriteCharacters: this.favoriteCharacters
+            }
+        }))
+    }
+
     getFavoriteCharacters(){        
         return this.favoriteCharacters
+    }
+
+    getFavoriteCharactersCount(){        
+        return this.favoriteCharacters.length
     }
 
     isCharacterExist(characterId){                
@@ -24,6 +39,7 @@ export class storageService {
             ]
             this.favoriteCharacters = arrayCharacters
             localStorage.setItem(localStorageKey, JSON.stringify(this.favoriteCharacters))                                
+            this.emitFavoritesChanged() 
         }
     }
 
@@ -39,6 +55,19 @@ export class storageService {
             const characters = this.favoriteCharacters.filter(item => item.id !== characterId)
             this.favoriteCharacters = characters
             localStorage.setItem(localStorageKey, JSON.stringify(this.favoriteCharacters))            
+            this.emitFavoritesChanged()
         }
     }
+
+    toggleFavoriteCharacter(character) {
+        if (this.isCharacterExist(character.id)) {
+            this.deleteFavoriteCharacter(character.id)
+        } else {
+            this.saveCharacter(character)
+        }
+    }
+
+
 }
+
+export const storage = new storageService()
