@@ -19,16 +19,16 @@ export class CharacterCard extends LitElement {
                 background: #fff;
                 box-shadow: 0 10px 25px rgb(0 0 0 / 8%);
                 transition: .5s;
+                cursor: pointer;
             }
 
             .image img {
-                height: 220px;
-                width: 220px;
+                height: 200px;
+                width: 200px;
                 object-fit: contain;
             }
 
-            h3,
-            p {
+            h3{
             transition: color .25s .15s;
             }
 
@@ -38,13 +38,8 @@ export class CharacterCard extends LitElement {
             }
 
             h3 {
-            margin-bottom: 15px;
-            color: #222;
-            }
-
-            p {
-            color: #666;
-            line-height: 1.6;
+                margin-bottom: 15px;
+                color: #222;
             }
 
             .card:hover {
@@ -58,8 +53,7 @@ export class CharacterCard extends LitElement {
             box-shadow: 0 0 0 35rem #667eea;
             }
 
-            .card:hover h3,
-            .card:hover p {
+            .card:hover h3{
             color: #fff;
             transition: color 0s;
             }
@@ -110,16 +104,23 @@ export class CharacterCard extends LitElement {
         }
     }
 
+    openCharacterModal() {
+        this.dispatchEvent(new CustomEvent('character-selected', {
+            detail: this.character,
+            bubbles: true,
+            composed: true
+        }))
+    }
+
     render() {
         return html`
-            <div class="card">
+            <div class="card" @click="${this.openCharacterModal}">
                 <div class="image">
                     <img src=${this.character?.image} alt=${this.character?.name}>
                 </div>
                 <div class="info">                    
                     <h3>${this.character?.name}</h3>                                
-                    <button @click="${(e) => { e.stopPropagation(); this.toggleFavorite() }}"
-                    class="btn ${this.character?.favorite ? 'btn-red' : 'btn-gray'}">
+                    <button @click="${(e) => { e.stopPropagation(); this.toggleFavorite() }}" class="btn ${this.character?.favorite ? 'btn-red' : 'btn-gray'}">
                         ${this.character?.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                     </button>
                 </div>

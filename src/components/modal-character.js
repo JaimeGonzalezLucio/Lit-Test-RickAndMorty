@@ -3,7 +3,6 @@ import { LitElement, html, css } from 'lit';
 export class ModalCharacter extends LitElement {
     static styles = [
         css`
-        
             .modal-overlay {
                 position: fixed;
                 top: 0;
@@ -29,41 +28,25 @@ export class ModalCharacter extends LitElement {
             .modal-content {
                 background: #24282f;
                 color: #ffffff;
-                border-radius: 8px;
                 width: 90%;
                 max-width: 450px;
                 overflow: hidden;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
                 position: relative;
-                transform: scale(0.8);
                 transition: transform 0.3s ease;
-                font-family: sans-serif;
-            }
-
-            .modal-overlay.open .modal-content {
-                transform: scale(1);
             }
 
             .close-btn {
                 position: absolute;
                 top: 10px;
                 right: 15px;
-                background: none;
-                border: none;
-                color: #9e9e9e;
                 font-size: 24px;
                 cursor: pointer;
-                transition: color 0.2s;
-            }
-
-            .close-btn:hover {
-                color: #ff9800;
             }
 
             .character-img {
                 width: 100%;
                 height: 250px;
-                object-fit: cover;
+                object-fit: contain
             }
 
             .character-details {
@@ -72,7 +55,7 @@ export class ModalCharacter extends LitElement {
 
             h2 {
                 margin: 0 0 10px 0;
-                color: #ff9800;
+                color: #c87e10;
             }
 
             .status {
@@ -82,35 +65,19 @@ export class ModalCharacter extends LitElement {
                 margin-bottom: 15px;
                 font-weight: bold;
             }
-
-            .status-icon {
-                height: 10px;
-                width: 10px;
-                border-radius: 50%;
-            }
-
-            .Alive { 
-                background: #55cc44; 
-            }
-
-            .Dead { 
-                background: #d63d2e; 
-            }
             
-            .unknown { 
-                background: #9e9e9e; 
+            .status span{
+                background-color: white;
+                color: black;
+                padding: .2rem .5rem;
+                border-radius:.2rem;
             }
 
             .info-label {
-                color: #9e9e9e;
-                font-size: 14px;
+                color: #fff;
                 margin-top: 10px;
             }
 
-            .info-value {
-                font-size: 16px;
-                margin-bottom: 10px;
-            }
         `
     ];
 
@@ -125,9 +92,7 @@ export class ModalCharacter extends LitElement {
         this.isOpen = false;
     }
 
-
     closeModal() {
-        this.isOpen = false;
         this.dispatchEvent(new CustomEvent('modal-closed', {
             bubbles: true,
             composed: true
@@ -135,36 +100,33 @@ export class ModalCharacter extends LitElement {
     }
 
     render() {
-        if (!this.characterData) return html``;
+        if (!this.characterData || !this.isOpen) {
+            return html``;
+        }
 
         return html`
-            <div class="modal-overlay ${this.isOpen ? 'open' : ''}" @click="${this._closeModal}">
-                
+            <div class="modal-overlay open" @click="${this.closeModal}">
                 <div class="modal-content" @click="${(e) => e.stopPropagation()}">
-                    <button class="close-btn" @click="${this._closeModal}">X</button>
-                    
+                    <button class="close-btn" @click="${this.closeModal}">X</button>
+
                     <img class="character-img" src="${this.characterData?.image}" alt="${this.characterData?.name}">
-                    
+
                     <div class="character-details">
                         <h2>${this.characterData?.name}</h2>
-                        
+
                         <div class="status">
-                            <span class="status-icon ${this.characterData?.status}"></span>
-                            ${this.characterData?.status} - ${this.characterData?.species}
+                            <span>${this.characterData?.status} </span>
+                            <span>${this.characterData?.species}</span>
                         </div>
 
-                        <div class="info-label">Género:</div>
-                        <div class="info-value">${this.characterData?.gender}</div>
+                        <div class="info-label">Genero: ${this.characterData?.gender}</div>                        
 
-                        <div class="info-label">Origen:</div>
-                        <div class="info-value">${this.characterData?.origin?.name || 'Desconocido'}</div>
-
-                        <div class="info-label">Última ubicación conocida:</div>
-                        <div class="info-value">${this.characterData?.location?.name || 'Desconocido'}</div>
+                        <div class="info-label">Origen: ${this.characterData?.origin?.name}</div>                        
                     </div>
                 </div>
             </div>
         `;
     }
 }
+
 customElements.define('modal-character', ModalCharacter);

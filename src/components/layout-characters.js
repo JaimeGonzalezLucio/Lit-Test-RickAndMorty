@@ -5,10 +5,13 @@ import { getData } from '../services/apiRequest.js'
 import { Loader } from './character-loader.js'
 
 import { CharacterCard } from '../components/character-card.js'
+import { ModalCharacter } from './modal-character.js'
 import { PlaceholderCards } from './placeholder-cards.js'
+import { PaginatorComponent } from './paginator-component.js'
 import { SearchFields } from './search-fields.js'
 import { normalizeFavoriteCharacters } from '../models/normalizeFavoriteCharacters.js'
 import { favorites_changed_event, storage } from '../services/storageService.js'
+
 class LayoutCharacters extends LitElement{
 
     constructor(){
@@ -20,6 +23,20 @@ class LayoutCharacters extends LitElement{
 
         this.favoritesCount = storage.getFavoriteCharactersCount()
         this.favoritesCards = false
+        this.selectedCharacter = null
+
+        this.isModalOpen = false
+
+        this.currentFilters = {}
+        this.currentPage = 1
+        this.paginationInfo = {
+            count: 0,
+            pages: 0,
+            next: null,
+            prev: null,
+            currentPage: 1
+        }
+
         this.handleFavoritesChanged = this.handleFavoritesChanged.bind(this)
     }
 
@@ -64,7 +81,11 @@ class LayoutCharacters extends LitElement{
         loading: { type: Boolean },
         errorMessage: { type: String },
         favoritesCount: { type : Number},
-        favoritesCards: { type: Boolean }
+        favoritesCards: { type: Boolean },
+        selectedCharacter: { type: Object },
+        isModalOpen: { type: Boolean },
+        currentPage: { type: Number },
+        paginationInfo: { type: Object }
     }
 
     connectedCallback() {
@@ -89,24 +110,38 @@ class LayoutCharacters extends LitElement{
         const controller = new AbortController()
         this.abortController = controller
         this.loading = true
-        this.errorMessage = ''
 
         try {
-            const resp = await getData(filters, controller.signal)
+            const resp = await getData({
+                ...filters,
+                page: this.currentPage
+            }, controller.signal)
 
             if (this.abortController !== controller) {
                 return
             }
 
             this.results = normalizeFavoriteCharacters(resp.data, storage.getFavoriteCharactersIds())
+            this.paginationInfo = resp.info
+            this.currentPage = resp.info.currentPage
             this.favoritesCount = storage.getFavoriteCharactersCount()
-            this.errorMessage = ''
+            
+            this.errorMessage = resp.message
+            
         } catch (error) {         
             if (controller.signal.aborted) {
                 return
             }
 
             this.results = []
+            this.paginationInfo = {
+                count: 0,
+                pages: 0,
+                next: null,
+                prev: null,
+                currentPage: this.currentPage
+            }
+            
             this.errorMessage = error.message
         } finally {
             if (this.abortController === controller) {
@@ -116,12 +151,29 @@ class LayoutCharacters extends LitElement{
     }
 
     handleFiltersChanged(event) {
-        this.loadCharacters(event.detail)
+        this.currentFilters = event.detail
+        this.currentPage = 1
+        this.loadCharacters(this.currentFilters)
+    }
+
+    handlePageChanged(event) {
+        this.currentPage = event.detail.page
+        this.loadCharacters(this.currentFilters)
     }
 
     handleFavoritesChanged(event) {
         this.favoritesCount = event.detail.count
         this.results = normalizeFavoriteCharacters(this.results, event.detail.favoriteIds)
+    }
+
+    handleCharacterSelected(event) {
+        this.selectedCharacter = event.detail
+        this.isModalOpen = true
+    }
+
+    handleModalClosed() {
+        this.isModalOpen = false
+        this.selectedCharacter = null
     }
 
     render(){       
@@ -153,7 +205,14 @@ class LayoutCharacters extends LitElement{
                 <search-fields @filters-changed="${this.handleFiltersChanged}"></search-fields>
                 <button class="btn-favorites">Favoritos ${this.favoritesCount}</button>
             </div>
-            ${bodyContent}
+
+            <div @character-selected="${this.handleCharacterSelected}">
+                ${bodyContent}
+            </div>
+
+            <modal-character .characterData=${this.selectedCharacter} .isOpen=${this.isModalOpen} @modal-closed="${this.handleModalClosed}" ></modal-character>
+
+            <paginator-component .currentPage=${this.currentPage} .totalPages=${this.paginationInfo.pages} .totalCount=${this.paginationInfo.count} @page-changed="${this.handlePageChanged}"></paginator-component>
         `
 
     }

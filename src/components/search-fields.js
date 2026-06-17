@@ -19,9 +19,9 @@ export class SearchFields extends LitElement {
             }
 
             input{
-                min-width:300px;
-                width:520px;
-                max-width: 520px;
+                min-width:250px;
+                width:300px;
+                max-width: 300px;
                 height:50px
             }
 
